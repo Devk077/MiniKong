@@ -1,0 +1,25 @@
+services:
+  gateway:
+    build: .
+    command: ["/gateway", "/config/gateway-docker.yaml"]
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+      - "2112:2112"
+    depends_on:
+      - upstream-a
+      - upstream-b
+
+  upstream-a:
+    build: .
+    command: ["/mockserver"]
+    environment:
+      SERVER_NAME: upstream-a
+      PORT: "5000"
+
+  upstream-b:
+    build: .
+    command: ["/mockserver"]
+    environment:
+      SERVER_NAME: upstream-b
+      PORT: "6000"

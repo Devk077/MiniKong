@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+admin:
+  port: 9090
+  host: "0.0.0.0"   # bind on all interfaces so Docker port-forwarding works
+
+upstreams:
+  - name: service-a
+    targets:
+      - http://upstream-a:5000   # Docker Compose DNS name
+
+  - name: service-b
+    targets:
+      - http://upstream-b:6000   # Docker Compose DNS name
+
+routes:
+  - path: /api/v1/
+    upstream: service-a
+    plugins:
+      rate_limit:
+        enabled: true
+        requests_per_second: 100.0
+        burst: 20
+      cache:
+        enabled: true
+        ttl_seconds: 30
+        max_entries: 1000
+      auth:
+        enabled: false
+        users: []
+
+  - path: /api/v2/
+    upstream: service-b
+    plugins:
+      rate_limit:
+        enabled: true
+        requests_per_second: 50.0
+        burst: 10
+      cache:
+        enabled: false
+        ttl_seconds: 0
+        max_entries: 0
+      auth:
+        enabled: true
+        users:
+          - username: admin
+            password: secret

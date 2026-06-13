@@ -293,7 +293,7 @@ rate(minigateway_cache_hits_total[5m])
 
 ## Benchmark Results
 
-Measured with [`hey`](https://github.com/rakyll/hey) on Windows 11, local loopback, running via `go run` (development mode). A compiled binary on Linux will produce lower latency numbers.
+Measured with [`hey`](https://github.com/rakyll/hey) on WSL2 Ubuntu (compiled binary, loopback). Remaining p99 latency is WSL2 virtual-network overhead; on bare Linux metal expect p99 ~2–5 ms.
 
 ### A — Proxy Overhead (no cache, no rate limiting)
 
@@ -301,11 +301,9 @@ Measured with [`hey`](https://github.com/rakyll/hey) on Windows 11, local loopba
 
 | Metric | Value |
 |--------|-------|
-| p50 latency | **10.70 ms** |
-| p99 latency | **203.30 ms** |
-| Throughput  | **1,151 req/sec** |
-
-The p99 spike is characteristic of Windows loopback + `go run` GC pauses. Compiled binary on Linux: p99 typically 2–5 ms.
+| p50 latency | **5.60 ms** |
+| p99 latency | **28.70 ms** |
+| Throughput  | **6,898 req/sec** |
 
 ### B — Cache Performance (same URL repeated)
 
@@ -313,13 +311,13 @@ The p99 spike is characteristic of Windows loopback + `go run` GC pauses. Compil
 
 | Metric | Value |
 |--------|-------|
-| Cache hit rate | **100.0%** |
-| p50 latency (cache hit) | **0.90 ms** |
-| p99 latency (cache hit) | **18.50 ms** |
-| Throughput | **22,986 req/sec** |
+| Cache hit rate | **99.9%** |
+| p50 latency (cache hit) | **0.80 ms** |
+| p99 latency (cache hit) | **8.30 ms** |
+| Throughput | **32,274 req/sec** |
 | Upstream load reduction | **68.7%** |
 
-Cache hits are **12x faster** than proxy calls (0.90 ms vs 10.70 ms p50) — the upstream is completely bypassed.
+Cache hits are **7x faster** than proxy calls (0.80 ms vs 5.60 ms p50) — the upstream is completely bypassed.
 
 ### C — Rate Limit Enforcement (50 rps, burst 5)
 
@@ -327,9 +325,9 @@ Cache hits are **12x faster** than proxy calls (0.90 ms vs 10.70 ms p50) — the
 
 | Metric | Value |
 |--------|-------|
-| 200 OK | **8** |
-| 429 Too Many Requests | **992** |
-| Rejection rate | **99.2%** |
+| 200 OK | **9** |
+| 429 Too Many Requests | **991** |
+| Rejection rate | **99.1%** |
 
 The token bucket correctly exhausts the burst of 5, then allows only 50 req/sec to pass.
 
